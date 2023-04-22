@@ -85,7 +85,7 @@ stockB = stockB[["symbol", "close"]]
 # take the lookback window size as input and the list of N-day periods to compute z-scores
 
 lookback_window = st.number_input(
-    "Lookback window size", min_value=1, max_value=100, value=60, step=1
+    "Lookback window size", min_value=1, max_value=2400, value=60, step=1
 )
 n_periods = [1, 5, 10, 20]
 
