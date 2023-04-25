@@ -69,8 +69,8 @@ col1, col2 = st.columns(2)
 new_df = pd.DataFrame()
 
 # Load the stock data into two separate dataframes, stockA and stockB
-stockB = pd.read_csv("D:\Downloads\Gemini_ETHUSD_1h.csv")
-stockA = pd.read_csv("D:\Downloads\Gemini_BTCUSD_1h.csv")
+stockB = pd.read_csv("Gemini_ETHUSD_1h.csv")
+stockA = pd.read_csv("Gemini_BTCUSD_1h.csv")
 
 with col1:
     st.header("Choose Start Date for Stock A and Stock B")
