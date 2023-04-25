@@ -318,4 +318,4 @@ new_df["returns"] = new_df["current_ret"] * new_df["position5"]
 # Make an equity curve starting from 100
 new_df["equity_curve"] = 100 * (1 + new_df["returns"]).cumprod()
 # plot the curve
-st.pyplot(new_df["equity_curve"].plot(figsize=(9, 6)), use_container_width=False)
+st.line_chart(new_df["equity_curve"], width=0, height=0, use_container_width=True)
