@@ -75,7 +75,6 @@ stockA = pd.read_csv("Gemini_BTCUSD_1h.csv")
 with col1:
     st.header("Choose Start Date for Stock A and Stock B")
     start_date = st.date_input("Start Date", value=pd.to_datetime("2020-01-01"))
-    st.write(type(start_date))
 
 with col2:
     st.header("Inputs")
@@ -90,7 +89,6 @@ with col2:
 
 stockA["date"] = pd.to_datetime(stockA["date"]).dt.date
 stockB["date"] = pd.to_datetime(stockB["date"]).dt.date
-st.write(type(stockA["date"][1]))
 # select rows with date after 2020-01-01
 stockA = stockA[stockA["date"] > start_date]
 stockB = stockB[stockB["date"] > start_date]
