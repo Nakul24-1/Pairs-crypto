@@ -64,30 +64,42 @@ def grangers_causation_matrix(data, variables, test="ssr_chi2test", verbose=Fals
     return df
 
 
+col1, col2 = st.columns(2)
+
 new_df = pd.DataFrame()
 
 # Load the stock data into two separate dataframes, stockA and stockB
 stockB = pd.read_csv("D:\Downloads\Gemini_ETHUSD_1h.csv")
 stockA = pd.read_csv("D:\Downloads\Gemini_BTCUSD_1h.csv")
-# convert date column to datetime
-stockA["date"] = pd.to_datetime(stockA["date"])
-stockB["date"] = pd.to_datetime(stockB["date"])
+
+with col1:
+    st.header("Choose Start Date for Stock A and Stock B")
+    start_date = st.date_input("Start Date", value=pd.to_datetime("2020-01-01"))
+    st.write(type(start_date))
+
+with col2:
+    st.header("Inputs")
+    # Set the lookback window and the list of N-day periods to compute z-scores for
+    # lookback_window = 60
+    lookback_window = st.number_input(
+        "Lookback Window", min_value=1, max_value=240, value=60, step=1
+    )
+    n_periods = st.multiselect("Choose Periods", [5, 10, 20, 40, 60], [5])
+    # Add one to n_periods
+    n_periods = [1] + n_periods
+
+stockA["date"] = pd.to_datetime(stockA["date"]).dt.date
+stockB["date"] = pd.to_datetime(stockB["date"]).dt.date
+st.write(type(stockA["date"][1]))
 # select rows with date after 2020-01-01
-stockA = stockA[stockA["date"] > "2020-01-01"]
-stockB = stockB[stockB["date"] > "2020-01-01"]
+stockA = stockA[stockA["date"] > start_date]
+stockB = stockB[stockB["date"] > start_date]
 # make date as index
 stockA.set_index("date", inplace=True)
 stockB.set_index("date", inplace=True)
 # select 3 columns which are date and symbol and close columns
 stockA = stockA[["symbol", "close"]]
 stockB = stockB[["symbol", "close"]]
-
-# take the lookback window size as input and the list of N-day periods to compute z-scores
-
-lookback_window = st.number_input(
-    "Lookback window size", min_value=1, max_value=2400, value=60, step=1
-)
-n_periods = [1, 5, 10, 20]
 
 # Compute the rolling N-day returns for each stock
 for n in n_periods:
@@ -145,28 +157,41 @@ df["ratio"] = np.log(df["stockA"]) / np.log(df["stockB"])
 # check if stockA causes stockB
 # grangers_causation_matrix(df, variables=["stockA", "stockB"])
 
+# Take inputs of the thresholds for each lookback period and store as a tuple
 
-# define the thresholds for each lookback period
-thresholds = {5: (1, -1), 10: (1, -1), 20: (1, -1)}
+threshold_short = st.number_input(
+    "Short Threshold", min_value=-3.0, max_value=3.0, value=1.0, step=0.1
+)
+threshold_long = st.number_input(
+    "Long Threshold", min_value=-3.0, max_value=3.0, value=-1.0, step=0.1
+)
+
+thresholds = {
+    5: (threshold_short, threshold_long),
+    10: (threshold_short, threshold_long),
+    20: (threshold_short, threshold_long),
+}
 
 # loop over the lookback periods
 for period in n_periods:
     # get the zdiff and threshold values for the current period
     zdiff = new_df[f"zdiff_{period}d"]
-    short_threshold, long_threshold = thresholds.get(period, (1, -1))
+    short_threshold, long_threshold = thresholds.get(
+        period, (threshold_short, threshold_long)
+    )
 
     # create a boolean mask based on the zdiff and threshold values
     short_signal = zdiff > short_threshold
     long_signal = zdiff < long_threshold
 
     # set the signal value where the condition is met
-    new_df.loc[short_signal, f"signal_{period}"] = -1
-    new_df.loc[long_signal, f"signal_{period}"] = 1
+    new_df.loc[short_signal, f"signal_{period}"] = 1
+    new_df.loc[long_signal, f"signal_{period}"] = -1
 
 
 # print the number of signals for each period
 for period in n_periods:
-    print(
+    st.write(
         f'Number of signals for period {period}: {new_df[f"signal_{period}"].count()}'
     )
 
@@ -184,9 +209,113 @@ new_df["wtETH"] = new_df["wtETH"] / new_df["wt_sum"]
 # drop the wt_sum column
 new_df.drop("wt_sum", axis=1, inplace=True)
 
-# Calculate future returns
-new_df["current_ret"] = stockA["returns_1d"] * new_df["wtBTC"].shift(1) - stockB[
-    "returns_1d"
-] * new_df["wtETH"].shift(1)
 
-st.dataframe(new_df)
+# Calculate future returns
+new_df["current_ret"] = (
+    stockA["returns_1d"] * new_df["wtBTC"].shift(1)
+    - stockB["returns_1d"] * new_df["wtETH"].shift(1)
+).shift(-1)
+st.dataframe(new_df.tail())
+
+# replace NA values with 0
+new_df.fillna(0, inplace=True)
+pd.options.mode.chained_assignment = None
+
+col3, col4 = st.columns(2)
+
+with col3:
+    LongCap = st.number_input(
+        "Long Cap", min_value=-3.00, max_value=3.00, value=1.00, step=0.05
+    )
+    ShortCap = st.number_input(
+        "Short Cap", min_value=-3.00, max_value=3.00, value=-1.00, step=0.05
+    )
+    age_limit = st.number_input(
+        "Age Limit", min_value=1, max_value=480, value=60, step=1
+    )
+
+# Create columns for long and short signals for each lookback period
+for period in n_periods:
+    new_df[f"Long_Cap{period}"] = 0
+    new_df[f"Short_Cap{period}"] = 0
+
+    # Create column for position and age and aged for each lookback period
+    new_df[f"position{period}"] = 0
+    new_df[f"age{period}"] = 0
+    new_df[f"aged{period}?"] = 0
+
+# Loop over each row in the dataframe user iterrows
+# for index, row in df.iterrows():
+
+for i in range(1, len(new_df)):
+    # Check for a long signal
+    if (new_df["zdiff_5d"].iloc[i] > LongCap) & (new_df["position5"].iloc[i - 1] == 1):
+        new_df["Long_Cap5"].iloc[i] = 1
+    else:
+        new_df["Long_Cap5"].iloc[i] = 0
+
+    # Check for a short signal
+    if (new_df["zdiff_5d"].iloc[i] < ShortCap) & (
+        new_df["position5"].iloc[i - 1] == -1
+    ):
+        new_df["Short_Cap5"].iloc[i] = 1
+    else:
+        new_df["Short_Cap5"].iloc[i] = 0
+
+    # Calculate Age of signal
+
+    if (
+        ((new_df["position5"].iloc[i - 1] == 0) and (new_df["signal_5"].iloc[i] != 0))
+        or ((new_df["position5"].iloc[i - 1] * new_df["signal_5"].iloc[i]) == -1)
+        or (
+            (new_df["age5"].iloc[i - 1] == age_limit)
+            and (new_df["signal_5"].iloc[i] != 0)
+        )
+    ):
+        new_df[f"age5"].iloc[i] = 1
+
+    elif (
+        ((new_df["position5"].iloc[i - 1] == 0) and (new_df["signal_5"].iloc[i] == 0))
+        or ((new_df["Long_Cap5"].iloc[i] != 0) or (new_df["Short_Cap5"].iloc[i] != 0))
+        or ((new_df["age5"].iloc[i - 1] == age_limit))
+    ):
+        new_df[f"age5"].iloc[i] = 0
+    else:
+        new_df[f"age5"].iloc[i] = new_df[f"age5"].iloc[i - 1] + 1
+
+    # Check if the signal is aged
+    if new_df[f"age5"].iloc[i - 1] == age_limit:
+        new_df[f"aged5?"].iloc[i] = 1
+    else:
+        new_df[f"aged5?"].iloc[i] = 0
+
+    # Calculate the position
+    # Excel formula =IF(AND(AE73=0,AF73=0,AG73=0,AI73=0),AJ72,AE73)
+
+    if (
+        (new_df[f"Long_Cap5"].iloc[i] == 0)
+        & (new_df[f"Short_Cap5"].iloc[i] == 0)
+        & (new_df[f"aged5?"].iloc[i] == 0)
+        & (new_df[f"signal_5"].iloc[i] == 0)
+    ):
+        new_df[f"position5"].iloc[i] = new_df[f"position5"].iloc[i - 1]
+    else:
+        new_df[f"position5"].iloc[i] = new_df["signal_5"].iloc[i]
+
+
+with col4:
+    # print values related to the signal 5
+    print(new_df["signal_5"].value_counts())
+    print(new_df["Long_Cap5"].value_counts())
+    print(new_df["Short_Cap5"].value_counts())
+
+    print(new_df["aged5?"].value_counts())
+    print(new_df["position5"].value_counts())
+
+# Calculate the returns by multiplying the position by the returns
+new_df["returns"] = new_df["current_ret"] * new_df["position5"]
+
+# Make an equity curve starting from 100
+new_df["equity_curve"] = 100 * (1 + new_df["returns"]).cumprod()
+# plot the curve
+st.pyplot(new_df["equity_curve"].plot(figsize=(9, 6)), use_container_width=False)
