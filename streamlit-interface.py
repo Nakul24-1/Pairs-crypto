@@ -13,10 +13,10 @@ from functions import *
 with st.form("my_form"):
     st.header("Pairs Trading Strategy")
     st.subheader("Choose Stock A and Stock B")
-    stockA_name = st.selectbox("Choose Stock A", ["BTC", "ETH", "LTC", "MATIC"])
+    stockA_name = st.selectbox("Choose Stock A", ["BTC", "ETH", "LTC"])
     stockB_name = st.selectbox(
         "Choose Stock B",
-        ["BTC", "ETH", "LTC", "MATIC"],
+        ["BTC", "ETH", "LTC"],
     )
     # Load the stock data into two separate dataframes, stockA and stockB
     stockB = pd.read_csv(f"Gemini_{stockB_name}USD_1h.csv")
@@ -52,6 +52,8 @@ with st.form("my_form"):
             "Long Threshold", min_value=-3.0, max_value=3.0, value=-1.0, step=0.1
         )
 
+        signal_reverse = st.checkbox("Reverse Signal", value=False)
+
         thresholds = {
             5: (threshold_short, threshold_long),
             10: (threshold_short, threshold_long),
@@ -72,7 +74,12 @@ with st.form("my_form"):
         new_df = make_new_df(stockA, stockB, n_periods)
 
         new_df = zdiff_calculations(
-            new_df, n_periods, thresholds, threshold_long, threshold_short
+            new_df,
+            n_periods,
+            thresholds,
+            threshold_long,
+            threshold_short,
+            signal_reverse,
         )
         st.success("Done")
 
@@ -107,17 +114,20 @@ with st.form("my_form"):
 pd.options.mode.chained_assignment = None
 st.divider()
 st.header("Calculate Positions")
-LongCap = st.number_input(
-    "Long Cap", min_value=-3.00, max_value=3.00, value=1.00, step=0.05
-)
-ShortCap = st.number_input(
-    "Short Cap", min_value=-3.00, max_value=3.00, value=-1.00, step=0.05
-)
-age_limit = st.number_input("Age Limit", min_value=1, max_value=480, value=60, step=1)
+with st.form("my_form2"):
+    LongCap = st.number_input(
+        "Long Cap", min_value=-3.00, max_value=3.00, value=1.00, step=0.05
+    )
+    ShortCap = st.number_input(
+        "Short Cap", min_value=-3.00, max_value=3.00, value=-1.00, step=0.05
+    )
+    age_limit = st.number_input(
+        "Age Limit", min_value=1, max_value=480, value=60, step=1
+    )
 
-positions_button = st.button("positions_button")
-if st.session_state.get("positions_button") != True:
-    st.session_state["positions_button"] = positions_button  # Saved the state
+    positions_button = st.form_submit_button("Calculate Positions")
+    if st.session_state.get("positions_button") != True:
+        st.session_state["positions_button"] = positions_button  # Saved the state
 
 if st.session_state["positions_button"] == True:
     for n in stqdm(n_periods):

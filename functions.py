@@ -208,7 +208,9 @@ def make_equity_curve(new_df, n):
 
 
 @st.cache_data
-def zdiff_calculations(new_df, n_periods, thresholds, threshold_short, threshold_long):
+def zdiff_calculations(
+    new_df, n_periods, thresholds, threshold_short, threshold_long, signal_reverse
+):
     # loop over the lookback periods
     for period in n_periods:
         # get the zdiff and threshold values for the current period
@@ -220,9 +222,13 @@ def zdiff_calculations(new_df, n_periods, thresholds, threshold_short, threshold
         short_signal = zdiff > short_threshold
         long_signal = zdiff < long_threshold
 
-        # set the signal value where the condition is met
-        new_df.loc[short_signal, f"signal_{period}"] = 1
-        new_df.loc[long_signal, f"signal_{period}"] = -1
+        if signal_reverse:
+            # set the signal value where the condition is met
+            new_df.loc[short_signal, f"signal_{period}"] = 1
+            new_df.loc[long_signal, f"signal_{period}"] = -1
+        else:
+            new_df.loc[short_signal, f"signal_{period}"] = -1
+            new_df.loc[long_signal, f"signal_{period}"] = 1
 
     return new_df
 
