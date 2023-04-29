@@ -10,14 +10,15 @@ from statsmodels.tsa.stattools import grangercausalitytests
 
 from functions import *
 
+# Set the page title and favicon
+st.set_page_config(page_title="Pairs Trading Strategy", page_icon="📈", layout="wide")
+
+
 with st.form("my_form"):
     st.header("Pairs Trading Strategy")
     st.subheader("Choose Stock A and Stock B")
     stockA_name = st.selectbox("Choose Stock A", ["BTC", "ETH", "LTC"])
-    stockB_name = st.selectbox(
-        "Choose Stock B",
-        ["BTC", "ETH", "LTC"],
-    )
+    stockB_name = st.selectbox("Choose Stock B", ["BTC", "ETH", "LTC"])
     # Load the stock data into two separate dataframes, stockA and stockB
     stockB = pd.read_csv(f"Gemini_{stockB_name}USD_1h.csv")
     stockA = pd.read_csv(f"Gemini_{stockA_name}USD_1h.csv")
@@ -155,8 +156,16 @@ if st.session_state["positions_button"] == True:
         for n in n_periods:
             st.bar_chart(new_df[f"position{n}"].value_counts(), width=0, height=0)
 
-if st.button("Plot equity curves"):
-    for n in n_periods:
-        new_df = calculate_returns(new_df, n)
-        new_df = make_equity_curve(new_df, n)
-        st.line_chart(new_df[f"equity_curve{n}"], width=0, height=0)
+    if st.button("Plot equity curves"):
+        col31, col32 = st.columns(2)
+        with col31:
+            for n in n_periods:
+                new_df = calculate_returns(new_df, n)
+                new_df = make_equity_curve(new_df, n)
+                st.write(
+                    f"Returns for Overall period {n} is {(new_df[f'equity_curve{n}'].iloc[-1] - 100).round(2)}"
+                )
+                st.line_chart(new_df[f"equity_curve{n}"], width=0, height=0)
+        with col32:
+            for n in n_periods:
+                drawdown(new_df[f"equity_curve{n}"])

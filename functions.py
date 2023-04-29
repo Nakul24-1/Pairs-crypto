@@ -234,6 +234,16 @@ def zdiff_calculations(
 
 
 @st.cache_data
+def drawdown(return_series):
+    drawdown = (return_series.cummax() - return_series) / return_series.cummax()
+    drawdown.max(), drawdown.idxmax()
+    # print max drawdown and duration
+    st.write(f"Max drawdown: {drawdown.max()}")
+    # plot the drawdown
+    st.line_chart(drawdown)
+
+
+@st.cache_data
 def adf_test(series, title=""):
     print(f"Augmented Dickey-Fuller Test: {title}")
     result = adfuller(
