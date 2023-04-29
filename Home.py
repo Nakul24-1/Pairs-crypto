@@ -17,8 +17,12 @@ st.set_page_config(page_title="Pairs Trading Strategy", page_icon="📈", layout
 with st.form("my_form"):
     st.header("Pairs Trading Strategy")
     st.subheader("Choose Stock A and Stock B")
-    stockA_name = st.selectbox("Choose Stock A", ["BTC", "ETH", "LTC"])
-    stockB_name = st.selectbox("Choose Stock B", ["BTC", "ETH", "LTC"])
+    stockA_name = st.selectbox(
+        "Choose Stock A", ["BTC", "ETH", "LTC", "AAVE", "DOGE", "SOL", "MATIC"]
+    )
+    stockB_name = st.selectbox(
+        "Choose Stock B", ["BTC", "ETH", "LTC", "AAVE", "DOGE", "SOL", "MATIC"]
+    )
     # Load the stock data into two separate dataframes, stockA and stockB
     stockB = pd.read_csv(f"Gemini_{stockB_name}USD_1h.csv")
     stockA = pd.read_csv(f"Gemini_{stockA_name}USD_1h.csv")
@@ -83,23 +87,6 @@ with st.form("my_form"):
             signal_reverse,
         )
         st.success("Done")
-
-        df = pd.DataFrame()
-        df["stockA"] = stockA["close"]
-        df["stockB"] = stockB["close"]
-        # drop na values
-        df.dropna(inplace=True)
-        # take difference of close price
-        df["diff"] = (df["stockA"]) - (df["stockB"])
-        # Take ratio of close price
-        df["ratio"] = (df["stockA"]) / (df["stockB"])
-
-        # check if the difference of log of close price is stationary
-        # adf_test(df["diff"])
-
-        # check if the ratio of log of close price is stationary
-        # adf_test(df["ratio"])
-
         # check if stockA causes stockB
         # grangers_causation_matrix(df, variables=["stockA", "stockB"])
 

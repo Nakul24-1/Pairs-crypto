@@ -245,7 +245,7 @@ def drawdown(return_series):
 
 @st.cache_data
 def adf_test(series, title=""):
-    print(f"Augmented Dickey-Fuller Test: {title}")
+    st.write(f"Augmented Dickey-Fuller Test: {title}")
     result = adfuller(
         series.dropna(), autolag="AIC"
     )  # dropna() handles differenced data
@@ -258,13 +258,13 @@ def adf_test(series, title=""):
     out = pd.Series(result[0:4], index=labels)
     for key, value in result[4].items():
         out[f"Critical Value ({key})"] = value
-    print(out.to_string())  # .to_string() removes the line "dtype: float64"
+    st.write(out)  # .to_string() removes the line "dtype: float64"
     if result[1] <= 0.05:
-        print(
+        st.write(
             "Strong evidence against the null hypothesis(Ho), reject the null hypothesis. Data has no unit root and is stationary"
         )
     else:
-        print(
+        st.write(
             "Weak evidence against null hypothesis, time series has a unit root, indicating it is non-stationary "
         )
 
