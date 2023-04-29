@@ -19,7 +19,7 @@ with st.form("my_form1"):
     )
 
     st.subheader("Choose Start and End Dates for Stock A and Stock B")
-    start_date = st.date_input("Start Date", value=pd.to_datetime("2020-01-01"))
+    start_date = st.date_input("Start Date", value=pd.to_datetime("2022-05-01"))
     end_date = st.date_input("End Date", value=pd.to_datetime("2023-04-01"))
 
     if st.form_submit_button("Start ADF test"):
