@@ -244,6 +244,11 @@ def drawdown(return_series):
 
 
 @st.cache_data
+def sharpe_ratio(returns):
+    return np.sqrt(365 * 24) * returns.mean() / returns.std()
+
+
+@st.cache_data
 def adf_test(series, title=""):
     st.write(f"Augmented Dickey-Fuller Test: {title}")
     result = adfuller(
