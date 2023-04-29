@@ -156,3 +156,9 @@ if st.session_state["positions_button"] == True:
         with col32:
             for n in n_periods:
                 drawdown(new_df[f"equity_curve{n}"])
+
+        # Print Sharpe Ratio of each period
+        for n in n_periods:
+            st.write(
+                f"Sharpe Ratio for period {n} is {sharpe_ratio(new_df[f'returns_{n}'])}"
+            )
