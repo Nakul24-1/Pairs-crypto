@@ -1,9 +1,9 @@
-matplotlib
+altair==4.2.0
+graphviz==0.20.1
+matplotlib==3.7.1
 numpy==1.24.1
-pandas==2.0.0
+pandas
+scikit_learn==1.2.2
 statsmodels==0.13.5
-streamlit
 stqdm
-sklearn
-xgboost
-graphviz
+xgboost==1.7.5
