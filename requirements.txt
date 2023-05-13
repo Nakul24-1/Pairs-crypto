@@ -6,3 +6,4 @@ streamlit
 stqdm
 sklearn
 xgboost
+graphviz
