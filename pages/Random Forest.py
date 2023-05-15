@@ -13,6 +13,7 @@ from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 from sklearn import tree
+
 # Print accuracy score
 from sklearn.metrics import classification_report
 
@@ -72,7 +73,7 @@ with st.form("classifier_form"):
 
 # if submit button is clicked
 if submit_button:
-    # if classifier is random forest clf = RandomForestClassifier(n_estimators=50, max_depth=8, min_samples_leaf=120, random_state=2)\
+    # if classifier is random forest clf = RandomForestClassifier(n_estimators=50, max_depth=8, min_samples_leaf=120, random_state=2)
     if classifier == "Random Forest":
         clf = RandomForestClassifier(
             n_estimators=n_estimators,
@@ -86,7 +87,7 @@ if submit_button:
         clf = XGBClassifier(
             n_estimators=n_estimators,
             max_depth=max_depth,
-            colsample_bytree=0.7,
+            colsample_bytree=0.75,
             random_state=random_state,
         )
     # check if spread is positive or negative and assign 1 or 0
@@ -194,12 +195,14 @@ if submit_button:
         # save the model
         with open("model.pkl", "wb") as f:
             pickle.dump(clf, f)
+        # add a divider line
+        st.divider()
 
 # Add a subheader
 st.subheader("Testing on unseen data")
 st.write("The final model tested on data between April 2023 and mid May 2023")
 
-tab1, tab2 , tab3 = st.tabs(["📈 Test", "🗃 Data","🔥Model Explainability"])
+tab1, tab2, tab3 = st.tabs(["📈 Test", "🗃 Data", "🔥Model Explainability"])
 
 with tab1:
     # load the model
@@ -317,16 +320,22 @@ with tab2:
 with tab3:
     st.write("Feature Importance")
     # Calculate feature importances
-    feature_importances = pd.Series(model.feature_importances_, index=X.columns).sort_values(ascending=False)
+    feature_importances = pd.Series(
+        model.feature_importances_, index=X.columns
+    ).sort_values(ascending=False)
     # Plot feature importances
     fig, ax = plt.subplots()
-    feature_importances.nlargest(20).plot(kind='barh')
+    feature_importances.nlargest(20).plot(kind="barh")
     plt.title("Feature Importance")
     plt.xlabel("Feature Importance")
     plt.ylabel("Features")
     st.pyplot(fig)
 
-    dot_data  = tree.export_graphviz(model.estimators_[0],feature_names=X.columns , out_file=None,max_depth=3, filled=True)
+    dot_data = tree.export_graphviz(
+        model.estimators_[0],
+        feature_names=X.columns,
+        out_file=None,
+        max_depth=3,
+        filled=True,
+    )
     st.graphviz_chart(dot_data)
-
-    
